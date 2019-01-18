@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -39,7 +40,7 @@ func isTestableDir(dir string) (bool, error) {
 	return false, nil
 }
 
-func visit(rootDir string) filepath.WalkFunc {
+func visit(rootDir string, debug bool) filepath.WalkFunc {
 	return func(path string, f os.FileInfo, err error) error {
 		// We only wan't to perform an operation on a directory as a whole
 		if !f.IsDir() {
@@ -59,6 +60,10 @@ func visit(rootDir string) filepath.WalkFunc {
 		cmd := exec.Command("go", "test", "-race", "-count=5", "-memprofile", "mem.out", ".")
 
 		out, err := cmd.Output()
+		if debug {
+			fmt.Printf("go test ./... output: %v\n", string(out))
+		}
+
 		if err != nil {
 			fmt.Printf("%10v %v\n", "ERROR", path)
 			return nil
@@ -67,6 +72,10 @@ func visit(rootDir string) filepath.WalkFunc {
 		pprofCmd := exec.Command("go", "tool", "pprof", "-list", path+".test", "mem.out")
 
 		out, err = pprofCmd.Output()
+
+		if debug {
+			fmt.Printf("go tool pprof output: %v\n", string(out))
+		}
 
 		if !strings.Contains(string(out), "Total") {
 			fmt.Printf("%10v %v\n", "ERROR", path)
@@ -81,9 +90,11 @@ func visit(rootDir string) filepath.WalkFunc {
 }
 
 func main() {
+	debug := flag.Bool("debug", false, "add diagnostic info for debugging")
+	flag.Parse()
 	wd, err := os.Getwd()
 	if err != nil {
 		fmt.Println("Could not get current working directory")
 	}
-	err = filepath.Walk(".", visit(wd))
+	err = filepath.Walk(".", visit(wd, *debug))
 }
