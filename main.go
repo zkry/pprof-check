@@ -18,6 +18,9 @@ func isValidPath(path string) bool {
 		if strings.HasPrefix(d, ".") {
 			return false
 		}
+		if d == "vendor" {
+			return false
+		}
 	}
 	return true
 }
