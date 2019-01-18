@@ -59,7 +59,7 @@ func visit(rootDir string, debug bool) filepath.WalkFunc {
 		defer os.Chdir(rootDir)
 		cmd := exec.Command("go", "test", "-race", "-count=5", "-memprofile", "mem.out", ".")
 
-		out, err := cmd.Output()
+		out, err := cmd.CombinedOutput()
 		if debug {
 			fmt.Printf("go test ./... output: %v\n", string(out))
 		}
